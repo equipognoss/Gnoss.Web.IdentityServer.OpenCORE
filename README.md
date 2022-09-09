@@ -2,7 +2,7 @@
 
 # Gnoss.Web.IdentityServer.OpenCORE
 
-![](https://github.com/equipognoss/Gnoss.Web.IdentityServer.OpenCORE/workflows/BuildWeb/badge.svg)
+![](https://github.com/equipognoss/Gnoss.Web.IdentityServer.OpenCORE/workflows/BuildIdentityServer/badge.svg)
 
 Aplicación Web que se encarga de proveer y validar los tokens de acceso para acceder a las aplicaciones de uso interno (intern, ontologies y documents). 
 
