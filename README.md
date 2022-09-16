@@ -17,29 +17,20 @@ Aplicación Web que se encarga de proveer y validar los tokens de acceso para ac
 Configuración estandar de esta aplicación en el archivo docker-compose.yml: 
 
 ```yml
-results:
-    image: gnoss/gnoss.web.results.opencore
+identityserver:
+    image: gnoss/gnoss.web.identityserver.opencore
     env_file: .env
     ports:
      - ${puerto_identity}:80
     environment:
      virtuosoConnectionString: ${virtuosoConnectionString}
-     acid: ${acid}
-     base: ${base}
-     redis__redis__ip__master: ${redis__redis__ip__master}
-     redis__redis__ip__read: ${redis__redis__ip__read}
-     redis__redis__bd: ${redis__redis__bd}
-     redis__redis__timeout: ${redis__redis__timeout}
-     redis__recursos__ip__master: ${redis__recursos__ip__master}
-     redis__recursos__ip__read: ${redis__recursos__ip__read}
-     redis__recursos__bd: ${redis__recursos__bd}
-     redis__recursos__timeout: ${redis__redis__timeout}
-     idiomas: ${idiomas}
-     Servicios__urlBase: ${Servicios__urlBase__web}
-     connectionType: ${connectionType}
+     IssuerUri: ${IssuerUri}
+     scopeIdentity: ${scopeIdentity}
+     clientSecretIdentity: ${clientSecretIdentity}
+     clientIDIdentity: ${clientIDIdentity}
+     segundostoken: ${segundostoken}
     volumes:
-      - ./logs/results:/app/logs
-      - ./logs/results:/app/trazas
+      - ./logs/identityserver:/app/logs
 ```
 
 Se pueden consultar los posibles valores de configuración de cada parámetro aquí: https://github.com/equipognoss/Gnoss.SemanticAIPlatform.OpenCORE
