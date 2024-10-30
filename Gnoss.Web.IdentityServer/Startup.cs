@@ -31,7 +31,21 @@ namespace Gnoss.Web.IdentityServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            IDictionary environmentVariables = Environment.GetEnvironmentVariables();
+			ILoggerFactory loggerFactory =
+			LoggerFactory.Create(builder =>
+			{
+				builder.AddConfiguration(Configuration.GetSection("Logging"));
+				builder.AddSimpleConsole(options =>
+				{
+					options.IncludeScopes = true;
+					options.SingleLine = true;
+					options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+					options.UseUtcTimestamp = true;
+				});
+			});
+
+			services.AddSingleton(loggerFactory);
+			IDictionary environmentVariables = Environment.GetEnvironmentVariables();
 
             string issuerUri = "";
             if (environmentVariables.Contains("IssuerUri"))
