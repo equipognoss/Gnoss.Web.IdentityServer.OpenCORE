@@ -119,7 +119,7 @@ namespace Gnoss.Web.IdentityServer
             services.AddIdentityServer(x =>
             {
                 x.IssuerUri = issuerUri;
-            }).AddDeveloperSigningCredential()
+            }).AddDeveloperSigningCredential(persistKey: false)
                .AddInMemoryPersistedGrants()
                .AddInMemoryCaching()
                .AddInMemoryClients(Clientes(tiempo, clientIDIdentity, clientIDSecret, scopeIdentity))
