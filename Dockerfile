@@ -7,13 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl
 
 WORKDIR /app
 
-COPY Gnoss.Web.IdentityServer/*.csproj ./
-
-RUN dotnet restore
-
 COPY . ./
 
-RUN dotnet publish Gnoss.Web.IdentityServer/Gnoss.Web.IdentityServer.csproj -c Release -o out
+RUN dotnet restore Gnoss.Web.IdentityServer.OpenCORE/Gnoss.Web.IdentityServer/Gnoss.Web.IdentityServer.csproj
+
+RUN dotnet publish Gnoss.Web.IdentityServer.OpenCORE/Gnoss.Web.IdentityServer/Gnoss.Web.IdentityServer.csproj -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
