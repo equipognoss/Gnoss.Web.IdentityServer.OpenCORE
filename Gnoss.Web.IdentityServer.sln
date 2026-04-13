@@ -5,6 +5,8 @@ VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gnoss.Web.IdentityServer", "Gnoss.Web.IdentityServer\Gnoss.Web.IdentityServer.csproj", "{08B3888B-132A-4713-9B85-C79F97F788B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Es.Riam.Gnoss.Util", "..\Gnoss.Commons\Es.Riam.Gnoss.Util\Es.Riam.Gnoss.Util.csproj", "{31AA9CE8-6D28-D5D6-CB1C-6DD08934B0FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{08B3888B-132A-4713-9B85-C79F97F788B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08B3888B-132A-4713-9B85-C79F97F788B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08B3888B-132A-4713-9B85-C79F97F788B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31AA9CE8-6D28-D5D6-CB1C-6DD08934B0FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31AA9CE8-6D28-D5D6-CB1C-6DD08934B0FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31AA9CE8-6D28-D5D6-CB1C-6DD08934B0FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31AA9CE8-6D28-D5D6-CB1C-6DD08934B0FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
