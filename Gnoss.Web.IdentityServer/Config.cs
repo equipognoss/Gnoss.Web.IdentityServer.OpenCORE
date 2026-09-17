@@ -1,71 +1,34 @@
-﻿using IdentityModel;
-using IdentityServer4;
-using IdentityServer4.Models;
-using IdentityServer4.Test;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using OpenIddict.Abstractions;
+using static OpenIddict.Abstractions.OpenIddictConstants;
 
-namespace Gnoss.Web.IdentityServer
+namespace Gnoss.Web.IdentityServer;
+
+public static class Config
 {
-    public class Config
+    public static OpenIddictApplicationDescriptor GetClient(
+        string clientId, string clientSecret, string scope)
     {
-        /// <summary>
-        /// Obtiene los clientes configurados
-        /// </summary>
-        public static IEnumerable<Client> GetClients(int pTiempo, string pClienteID, string pClienteSecret, string pScope)
+        return new OpenIddictApplicationDescriptor
         {
-            return new List<Client>
+            ClientId = clientId,
+            ClientSecret = clientSecret,
+            ClientType = ClientTypes.Confidential,
+            Permissions =
             {
-                // ClientId es el parámetro del servicio que solicita acceso a través de 'client_id'
-                // ClientSecrets es el parámetro del servicio que solicita acceso a través de 'client_secret'
-                // AllowedScopes son los scopes a los que se le da acceso al servicio
-                
-                // Cliente para el servicio externo (en desuso)
-                new Client
-                {
-                    ClientId = pClienteID,
-                    AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    ClientSecrets =
-                    {
-                        new Secret(pClienteSecret.Sha256())
-                    },
-                    AllowedScopes = 
-                    {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        pScope
-                        
-                    },
-                    AccessTokenLifetime = pTiempo,
-                    AccessTokenType = AccessTokenType.Jwt
-                },
-            };
-        }
+                Permissions.Endpoints.Token,
+                Permissions.GrantTypes.ClientCredentials,
+                Permissions.Prefixes.Scope + scope,
+            }
+        };
+    }
 
-        // APIs allowed to access the Auth server
-        public static IEnumerable<ApiResource> GetApiResources(string pScope)
+    public static OpenIddictScopeDescriptor GetScope(string scope)
+    {
+        return new OpenIddictScopeDescriptor
         {
-            return new List<ApiResource>
-            {
-                new ApiResource()
-                {
-                    Name = pScope,   //This is the name of the API
-                    Description = "This is the invoice Api-resource description",
-                    Enabled = true,
-                    DisplayName = "Identity Server API",
-                    Scopes = new List<string> { pScope }
-                }
-            };
-        }
-
-        public static IEnumerable<ApiScope> GetApiScopes(string pScope)
-        {
-            return new[]
-            {
-                new ApiScope(pScope, "Identity Server API"),
-            };
-        }
-
+            Name = scope,
+            DisplayName = "Identity Server API",
+            Resources = { scope }
+        };
     }
 }

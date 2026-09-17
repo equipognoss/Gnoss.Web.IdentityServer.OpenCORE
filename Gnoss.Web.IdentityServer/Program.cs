@@ -1,6 +1,5 @@
 using Es.Riam.Gnoss.Util.General;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
@@ -9,7 +8,7 @@ namespace Gnoss.Web.IdentityServer
 {
     public class Program
     {
-        private static Serilog.ILogger _startupLogger;
+        private static ILogger _startupLogger;
         public static void Main(string[] args)
         {
             _startupLogger = LoggingService.ConfigurarBasicStartupSerilog().CreateBootstrapLogger().ForContext<Program>();

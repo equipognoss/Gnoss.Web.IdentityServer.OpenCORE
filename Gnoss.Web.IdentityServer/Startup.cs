@@ -1,11 +1,5 @@
-using IdentityServer4.EntityFramework.DbContexts;
-using IdentityServer4.EntityFramework.Mappers;
-using IdentityServer4.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,9 +8,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
+using static OpenIddict.Server.OpenIddictServerEvents;
 
 namespace Gnoss.Web.IdentityServer
 {
@@ -48,32 +40,37 @@ namespace Gnoss.Web.IdentityServer
 			IDictionary environmentVariables = Environment.GetEnvironmentVariables();
 
             string issuerUri = "";
+
             if (environmentVariables.Contains("IssuerUri"))
             {
                 issuerUri = environmentVariables["IssuerUri"] as string;
             }
             else
             {
-                issuerUri = Configuration.GetConnectionString("IssuerUri");
+                issuerUri = Configuration["IssuerUri"];
+            }
+
+            if (string.IsNullOrEmpty(issuerUri))
+            {
+                throw new InvalidOperationException("La variable de configuracion 'IssuerUri' es obligatoria");
             }
 
             int tiempo = 0;
-            try
+
+            if (environmentVariables.Contains("segundostoken"))
             {
-                if (environmentVariables.Contains("segundostoken"))
-                {
-                    tiempo = int.Parse(environmentVariables["segundostoken"] as string);
-                }
-                else
-                {
-                    tiempo = int.Parse(Configuration.GetConnectionString("segundostoken"));
-                }
+                _ = int.TryParse(environmentVariables["segundostoken"] as string, out tiempo);
             }
-            catch { }
+            else
+            {
+                _ = int.TryParse(Configuration["segundostoken"], out tiempo);
+            }
+
             if (tiempo == 0)
             {
                 tiempo = 86400;
             }
+
             string scopeIdentity = "";
             if (environmentVariables.Contains("scopeIdentity"))
             {
@@ -81,17 +78,26 @@ namespace Gnoss.Web.IdentityServer
             }
             else
             {
-                scopeIdentity = Configuration.GetConnectionString("scopeIdentity");
+                scopeIdentity = Configuration["scopeIdentity"];
             }
-
+            if (string.IsNullOrEmpty(scopeIdentity))
+            {
+                throw new InvalidOperationException("La variable de configuracion 'scopeIdentity' es obligatoria");
+            }
             string clientIDIdentity = "";
+
             if (environmentVariables.Contains("clientIDIdentity"))
             {
                 clientIDIdentity = environmentVariables["clientIDIdentity"] as string;
             }
             else
             {
-                clientIDIdentity = Configuration.GetConnectionString("clientIDIdentity");
+                clientIDIdentity = Configuration["clientIDIdentity"];
+            }
+
+            if (string.IsNullOrEmpty(clientIDIdentity))
+            {
+                throw new InvalidOperationException("La variable de configuracion 'clientIDIdentity' es obligatoria");
             }
 
             string clientIDSecret = "";
@@ -101,10 +107,13 @@ namespace Gnoss.Web.IdentityServer
             }
             else
             {
-                clientIDSecret = Configuration.GetConnectionString("clientSecretIdentity");
-                
+                clientIDSecret = Configuration["clientSecretIdentity"];
             }
 
+            if (string.IsNullOrEmpty(clientIDSecret))
+            {
+                throw new InvalidOperationException("La variable de configuracion 'clientSecretIdentity' es obligatoria");
+            }
 
             // Add Cors
             services.AddCors(options =>
@@ -116,37 +125,62 @@ namespace Gnoss.Web.IdentityServer
                     builder.AllowAnyMethod();
                 });
             });
-            services.AddIdentityServer(x =>
-            {
-                x.IssuerUri = issuerUri;
-            }).AddDeveloperSigningCredential(persistKey: false)
-               .AddInMemoryPersistedGrants()
-               .AddInMemoryCaching()
-               .AddInMemoryClients(Clientes(tiempo, clientIDIdentity, clientIDSecret, scopeIdentity))
-               .AddInMemoryApiResources(ApiResources(scopeIdentity))
-               .AddInMemoryApiScopes(apiScopes(scopeIdentity));
-            
 
+            // Base de datos en memoria
+            services.AddDbContext<DbContext>(options =>
+            {
+                options.UseInMemoryDatabase("openiddict-db");
+                options.UseOpenIddict();
+            });
+
+            // Clase que se enecarga de responder las peticiones /connect/token
+            services.AddScoped<TokenRequestHandler>();
+
+            // Configuraci�n de OpenIdDict
+            services.AddOpenIddict()
+                .AddCore(options =>
+                {
+                    options.UseEntityFrameworkCore()
+                   .UseDbContext<DbContext>();
+                })
+                .AddServer(options =>
+                {
+                    // Indicamos la URI del servidor de autenticacion
+                    options.SetIssuer(new Uri(issuerUri));
+
+                    // Indicar el endpoint donde se piden los tokens
+                    options.SetTokenEndpointUris("/connect/token");
+
+                    // Se habilita el flujo de tipo client_credentials
+                    options.AllowClientCredentialsFlow();
+
+                    // Se establece el tiempo de vida del token (valor por defecto 24h)
+                    options.SetAccessTokenLifetime(TimeSpan.FromSeconds(tiempo));
+
+                    // Se genera la clave de cifrado en memoria
+                    options.AddEphemeralEncryptionKey()
+                           .AddEphemeralSigningKey();
+
+                    // Deshabilita la encriptacion de los tokens
+                    options.DisableAccessTokenEncryption();
+
+                    // Monta los middlewere de ASP.Net Core para que funcione con los de OpenIddict
+                    options.UseAspNetCore()
+                           // Permite recibir peticiones http                        
+                           .DisableTransportSecurityRequirement();
+
+                    // Clase encargada de procesar las solicitudes al endpoint: /connect/token
+                    options.AddEventHandler<HandleTokenRequestContext>(builder => builder.UseScopedHandler<TokenRequestHandler>());
+                });
+
+            // Poblar la base de datos en memoria con las configuraciones especificadas
+            services.AddHostedService(sp =>
+                new OpenIddictSeeder(clientIDIdentity, clientIDSecret, scopeIdentity, sp));
 
             services.AddControllers();
-            
 
         }
 
-        private IEnumerable<ApiScope> apiScopes(string pScope)
-        {
-            return Config.GetApiScopes(pScope);
-        }
-
-        private IEnumerable<ApiResource> ApiResources(string pScope)
-        {
-            return Config.GetApiResources(pScope);
-        }
-
-        private IEnumerable<Client> Clientes(int pTiempo, string pClienteID, string pClienteSecret, string pScope)
-        {
-            return Config.GetClients(pTiempo, pClienteID, pClienteSecret, pScope);
-        }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -156,14 +190,11 @@ namespace Gnoss.Web.IdentityServer
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseIdentityServer();
-
-            app.UseCors();
-
-            app.UseHttpsRedirection();
+            app.UseCors("_myAllowSpecificOrigins");
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
