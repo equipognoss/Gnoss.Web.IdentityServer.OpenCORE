@@ -164,6 +164,10 @@ namespace Gnoss.Web.IdentityServer
                     // Deshabilita la encriptacion de los tokens
                     options.DisableAccessTokenEncryption();
 
+                    // No se guardan los tokens emitidos en la base de datos en memoria: los access tokens son JWT autocontenidos
+                    // y no se usan tokens de referencia, revocacion ni introspeccion. Evita que la memoria crezca con cada token (CORE-7962)
+                    options.DisableTokenStorage();
+
                     // Monta los middlewere de ASP.Net Core para que funcione con los de OpenIddict
                     options.UseAspNetCore()
                            // Permite recibir peticiones http                        
